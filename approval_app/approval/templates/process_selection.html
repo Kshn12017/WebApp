@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Select Process and Upload File</h2>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ process_form.as_p }}
+    {{ file_form.as_p }}
+    <button type="submit">Upload</button>
+  </form>
+  
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    // Listen for changes in the Process dropdown
+    $('#id_process').change(function() {
+      var processId = $(this).val();
+      
+      $.ajax({
+        url: "{% url 'load_process_codes' %}",  // Create this URL
+        data: {
+          'process_id': processId
+        },
+        success: function(data) {
+          $("#id_process_code").html(data);  // Populate ProcessCode dropdown
+        }
+      });
+    });
+  </script>
+{% endblock %}
