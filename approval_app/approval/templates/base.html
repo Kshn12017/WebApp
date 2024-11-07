@@ -24,5 +24,27 @@
     <div class="content">
         {% block content %}{% endblock %}
     </div>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script>
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'error' %}
+                    swal({
+                        icon: 'error',
+                        title: 'Error',
+                        text: "{{ message|safe }}",
+                    });
+                {% elif message.tags == 'success' %}
+                    swal({
+                        icon: 'success',
+                        title: 'Success',
+                        text: "{{ message|safe }}",
+                        confirmButtonText: 'Okay'
+                    });
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </script>
+    
 </body>
 </html>
