@@ -85,11 +85,39 @@ def manage_processes(request):
             return redirect('manage_processes')
         
         if code_form.is_valid():
+            code_name = code_form.cleaned_data['code_name']
+            
+            # Check if the ProcessCode with the same name already exists
+            if ProcessCode.objects.filter(code_name=code_name).exists():
+                messages.error(request, f"The Process Code '{code_name}' already exists.")
+                return redirect('manage_processes')
+            
             code_form.save()
             messages.success(request, "Process Code added successfully.")
             return redirect('manage_processes')
         
         if level_form.is_valid():
+            level_number = level_form.cleaned_data['level_number']
+            process_code = level_form.cleaned_data['process_code']
+            
+            # Ensure number is not negative
+            if level_number <= 0:
+                messages.error(request, "Approval Level must be a positive integer.")
+                return redirect('manage_processes')
+            
+            # Ensure levels are created in order
+            existing_levels = ApprovalLevel.objects.filter(process_code=process_code).order_by('level_number')
+            
+            # Check if the next level in sequence should be created
+            if existing_levels.exists():
+                next_expected_level = existing_levels.last().level_number + 1
+            else:
+                next_expected_level = 1
+            
+            if level_number != next_expected_level:
+                messages.error(request, f"Please create {next_expected_level} level approval first.")
+                return redirect('manage_processes')
+            
             level_form.save()
             messages.success(request, "Approval Level added successfully.")
             return redirect('manage_processes')
@@ -104,4 +132,14 @@ def manage_processes(request):
         'level_form': level_form
     })
     
+def add_approver(request):
+    if request.method == 'POST':
+        approver_form = ApproverForm(request.POST)
+        if approver_form.is_valid():
+            approver_form.save()
+            messages.success(request, "Approver added successfully.")
+            return redirect('add_approver')
+    else:
+        approver_form = ApproverForm()
     
+    return render(request, 'add_approver.html', {'approver_form': approver_form})

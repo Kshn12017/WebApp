@@ -27,7 +27,6 @@
 <h3>Add New Approval Level</h3>
 <form method="post" action="{% url 'manage_processes' %}">
     {% csrf_token %}
-    
     {{ level_form.as_p }}
     <button type="submit">Add Approval Level</button>
 </form>

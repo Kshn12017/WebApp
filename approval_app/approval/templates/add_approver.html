@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Add Approver{% endblock %}
+
+{% block content %}
+<h2>Add New Approver</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ approver_form.as_p }}
+    <button type="submit">Add Approver</button>
+</form>
+{% endblock %}
