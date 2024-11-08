@@ -1,4 +1,7 @@
 from django.http import JsonResponse
+from django.shortcuts import render
+
+# Create your views here.
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.core.exceptions import ValidationError
@@ -7,6 +10,7 @@ from django.core.validators import EmailValidator
 from .models import *
 from .forms import *
 import pandas as pd
+from django.utils.safestring import mark_safe
 
 def process_selection(request):
     process_form = ProcessSelectionForm(request.POST or None)
@@ -21,10 +25,11 @@ def process_selection(request):
         # Validate Excel File
         try:
             validate_excel_file(uploaded_file.file.path)
-            messages.success(request, "File uploaded and validated successfully.")
+            msg = "File uploaded and validated successfully."
+            messages.success(request, mark_safe(msg))
             return redirect('process_selection')
         except ValidationError as e:
-            messages.error(request, f"Validation error: {e}")
+            messages.error(request, mark_safe(e.message))
             uploaded_file.delete()
             
     else:
@@ -51,7 +56,7 @@ def validate_excel_file(file_path):
     required_columns = ['First Name', 'Last Name', 'Email', 'Roll Number']
     for column in required_columns:
         if column not in df.columns:
-            raise ValidationError(f"The Excel file must contain the column '{column}'.")
+            raise ValidationError(f"The Excel file must contain the column {column}.")
 
     # Check at least one row of data
     if df.shape[0] < 1:
@@ -64,7 +69,9 @@ def validate_excel_file(file_path):
             raise ValidationError(f"Row {index + 2} is missing values in columns: {', '.join(missing_values)}.")
 
     # Validate email addresses in the Email column
+    from django.core.validators import EmailValidator
     email_validator = EmailValidator()
-    for email in df['Email']:
+    for email in df['Email'].dropna():
         email_validator(email)
-
+        
+        

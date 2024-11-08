@@ -30,12 +30,14 @@
             {% for message in messages %}
                 {% if message.tags == 'error' %}
                     swal({
+                        html: true,
                         icon: 'error',
                         title: 'Error',
                         text: "{{ message|safe }}",
                     });
                 {% elif message.tags == 'success' %}
                     swal({
+                        html: true,
                         icon: 'success',
                         title: 'Success',
                         text: "{{ message|safe }}",
