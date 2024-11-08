@@ -1,4 +1,5 @@
 from django.db import models
+import os
 
 # Create your models here.
 class Process(models.Model):
@@ -22,3 +23,9 @@ class UploadedFile(models.Model):
     def __str__(self):
         return f"{self.file.name} for {self.process_code.code_name}"
     
+    #Delete from system before deleting from database.
+    def delete(self, *args, **kwargs):
+        if self.file:
+            if os.path.isfile(self.file.path):
+                os.remove(self.file.path)
+        super().delete(*args, **kwargs)

@@ -1,7 +1,4 @@
 from django.http import JsonResponse
-from django.shortcuts import render
-
-# Create your views here.
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.core.exceptions import ValidationError
@@ -25,7 +22,6 @@ def process_selection(request):
         try:
             validate_excel_file(uploaded_file.file.path)
             messages.success(request, "File uploaded and validated successfully.")
-            # Redirect to next step in the approval pipeline
             return redirect('process_selection')
         except ValidationError as e:
             messages.error(request, f"Validation error: {e}")
@@ -47,21 +43,28 @@ def load_process_codes(request):
     return JsonResponse(render_to_string('process_code_options.html', {'process_codes': process_codes}), safe=False)
 
 
-
 def validate_excel_file(file_path):
     # Load the Excel file
     df = pd.read_excel(file_path)
 
     # Check required columns
     required_columns = ['First Name', 'Last Name', 'Email', 'Roll Number']
-    if not all(column in df.columns for column in required_columns):
-        raise ValidationError("The Excel file must contain columns: First Name, Last Name, Email, Roll Number.")
-    
+    for column in required_columns:
+        if column not in df.columns:
+            raise ValidationError(f"The Excel file must contain the column '{column}'.")
+
     # Check at least one row of data
     if df.shape[0] < 1:
         raise ValidationError("The Excel file must contain at least one row of data.")
-    
-    # Validate email addresses
+
+    # Check each row to ensure no required columns are empty
+    for index, row in df.iterrows():
+        missing_values = [col for col in required_columns if pd.isnull(row[col])]
+        if missing_values:
+            raise ValidationError(f"Row {index + 2} is missing values in columns: {', '.join(missing_values)}.")
+
+    # Validate email addresses in the Email column
     email_validator = EmailValidator()
     for email in df['Email']:
         email_validator(email)
+
