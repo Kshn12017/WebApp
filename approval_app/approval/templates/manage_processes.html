@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Manage Processes, Codes, and Approval Levels</h2>
+
+<!-- Add Process Form -->
+<h3>Add New Process</h3>
+<form method="post" action="{% url 'manage_processes' %}">
+    {% csrf_token %}
+    {{ process_form.as_p }}
+    <button type="submit">Add Process</button>
+</form>
+
+<hr>
+
+<!-- Add Process Code Form -->
+<h3>Add New Process Code</h3>
+<form method="post" action="{% url 'manage_processes' %}">
+    {% csrf_token %}
+    {{ code_form.as_p }}
+    <button type="submit">Add Process Code</button>
+</form>
+
+<hr>
+
+<!-- Add Approval Level Form -->
+<h3>Add New Approval Level</h3>
+<form method="post" action="{% url 'manage_processes' %}">
+    {% csrf_token %}
+    
+    {{ level_form.as_p }}
+    <button type="submit">Add Approval Level</button>
+</form>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+    
+        // Handle the "Add Approval Level" form dropdown change
+        $('#id_process_approval_form').change(function() {
+            var processId = $(this).val();
+    
+            $.ajax({
+                url: "/load-process-codes/",
+                data: { 'process_id': processId },
+                success: function(data) {
+                    var processCodeSelect = $("#id_process_code");
+                    processCodeSelect.empty();
+                    processCodeSelect.append(new Option("Choose a Process Code", ""));
+    
+                    $.each(data.options, function(index, option) {
+                        processCodeSelect.append(new Option(option[1], option[0]));
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error in AJAX request:", status, error);
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock %}

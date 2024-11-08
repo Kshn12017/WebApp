@@ -11,18 +11,27 @@
   
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script>
-    // Listen for changes in the Process dropdown
-    $('#id_process').change(function() {
-      var processId = $(this).val();
+    $(document).ready(function() {
       
-      $.ajax({
-        url: "{% url 'load_process_codes' %}",  // Create this URL
-        data: {
-          'process_id': processId
-        },
-        success: function(data) {
-          $("#id_process_code").html(data);  // Populate ProcessCode dropdown
-        }
+      $('#id_process').change(function() {
+        var processId = $(this).val();
+        
+        $.ajax({
+          url: "{% url 'load_process_codes' %}",  // Ensure this URL is correctly set in urls.py
+          data: {
+            'process_id': processId
+          },
+          success: function(data) {
+            var processCodeSelect = $("#id_process_code");
+            processCodeSelect.empty();  // Clear current options
+            processCodeSelect.append(new Option("Choose a Process Code", ""));
+  
+            // Populate with new options
+            $.each(data.options, function(index, option) {
+              processCodeSelect.append(new Option(option[1], option[0]));
+            });
+          }
+        });
       });
     });
   </script>

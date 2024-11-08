@@ -29,3 +29,12 @@ class UploadedFile(models.Model):
             if os.path.isfile(self.file.path):
                 os.remove(self.file.path)
         super().delete(*args, **kwargs)
+
+class ApprovalLevel(models.Model):
+    process = models.ForeignKey(Process, on_delete=models.CASCADE)
+    process_code = models.ForeignKey(ProcessCode, on_delete=models.CASCADE)
+    level_number = models.IntegerField()
+    approver = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"Level {self.level_number} - {self.approver}"

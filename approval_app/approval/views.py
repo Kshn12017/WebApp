@@ -44,9 +44,8 @@ def process_selection(request):
 
 def load_process_codes(request):
     process_id = request.GET.get('process_id')
-    process_codes = ProcessCode.objects.filter(process_id=process_id)
-    return JsonResponse(render_to_string('process_code_options.html', {'process_codes': process_codes}), safe=False)
-
+    process_codes = ProcessCode.objects.filter(process_id=process_id).values_list('id', 'code_name')
+    return JsonResponse({'options': list(process_codes)})
 
 def validate_excel_file(file_path):
     # Load the Excel file
@@ -74,4 +73,35 @@ def validate_excel_file(file_path):
     for email in df['Email'].dropna():
         email_validator(email)
         
+def manage_processes(request):
+    if request.method == 'POST':
+        process_form = ProcessForm(request.POST)
+        code_form = ProcessCodeForm(request.POST)
+        level_form = ApprovalLevelForm(request.POST)
         
+        if process_form.is_valid():
+            process_form.save()
+            messages.success(request, "Process added successfully.")
+            return redirect('manage_processes')
+        
+        if code_form.is_valid():
+            code_form.save()
+            messages.success(request, "Process Code added successfully.")
+            return redirect('manage_processes')
+        
+        if level_form.is_valid():
+            level_form.save()
+            messages.success(request, "Approval Level added successfully.")
+            return redirect('manage_processes')
+    else:
+        process_form = ProcessForm()
+        code_form = ProcessCodeForm()
+        level_form = ApprovalLevelForm()
+
+    return render(request, 'manage_processes.html', {
+        'process_form': process_form,
+        'code_form': code_form,
+        'level_form': level_form
+    })
+    
+    

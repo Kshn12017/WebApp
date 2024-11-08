@@ -5,3 +5,4 @@ from .models import *
 admin.site.register(Process)
 admin.site.register(ProcessCode)
 admin.site.register(UploadedFile)
+admin.site.register(ApprovalLevel)
