@@ -12,9 +12,17 @@
             <h2 class="brand">Approval System</h2>
             <ul class="nav-links">
                 <li><a href="{% url 'process_selection' %}">Upload File</a></li>
+                {% if user.is_admin %}
                 <li><a href="{% url 'manage_processes' %}">Manage Processes</a></li>
                 <li><a href="{% url 'add_approver' %}">Add Approver</a></li>
+                {% endif %}
                 <li><a href="">Approval Dashboard</a></li>
+                {% if user.is_authenticated %}
+                <li><a href="{% url 'logout' %}">logout</a></li>
+                {% else %}
+                <li><a href="{% url 'login' %}">login</a></li>
+                <li><a href="{% url 'signup' %}">signup</a></li>
+                {% endif %}
             </ul>
         </div>
     </nav>

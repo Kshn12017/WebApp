@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.shortcuts import render
-
+from django.contrib.auth import authenticate, login, logout
 # Create your views here.
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
@@ -24,10 +24,13 @@ def process_selection(request):
 
         # Validate Excel File
         try:
-            validate_excel_file(uploaded_file.file.path)
-            msg = "File uploaded and validated successfully."
-            messages.success(request, mark_safe(msg))
-            return redirect('process_selection')
+            if not uploaded_file.file.path.lower().endswith(('.xls', '.xlsx')):
+                raise ValidationError("Upload file must be an Excel file.")
+            else:
+                validate_excel_file(uploaded_file.file.path)
+                msg = "File uploaded and validated successfully."
+                messages.success(request, mark_safe(msg))
+                return redirect('process_selection')
         except ValidationError as e:
             messages.error(request, mark_safe(e.message))
             uploaded_file.delete()
@@ -47,9 +50,13 @@ def load_process_codes(request):
     process_codes = ProcessCode.objects.filter(process_id=process_id).values_list('id', 'code_name')
     return JsonResponse({'options': list(process_codes)})
 
-def validate_excel_file(file_path):
-    # Load the Excel file
-    df = pd.read_excel(file_path)
+
+def validate_excel_file(file_path):    
+    # Attempt to read the file with pandas
+    try:
+        df = pd.read_excel(file_path)
+    except Exception as e:
+        raise ValidationError(f"Error reading Excel file: {str(e)}")
 
     # Check required columns
     required_columns = ['First Name', 'Last Name', 'Email', 'Roll Number']
@@ -72,6 +79,7 @@ def validate_excel_file(file_path):
     email_validator = EmailValidator()
     for email in df['Email'].dropna():
         email_validator(email)
+      
         
 def manage_processes(request):
     if request.method == 'POST':
@@ -131,6 +139,7 @@ def manage_processes(request):
         'code_form': code_form,
         'level_form': level_form
     })
+  
     
 def add_approver(request):
     if request.method == 'POST':
@@ -143,3 +152,69 @@ def add_approver(request):
         approver_form = ApproverForm()
     
     return render(request, 'add_approver.html', {'approver_form': approver_form})
+
+
+def user_login(request):
+    if request.method == 'POST':
+        form = UserLoginForm(request, data=request.POST)
+        if form.is_valid():
+            email = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, email=email, password=password)
+            
+            if user is not None:
+                login(request, user)
+                messages.success(request, f"Welcome, {user.first_name}!")
+                return redirect('process_selection')
+            else:
+                messages.error(request, "Invalid email or password.")
+        else:
+            messages.error(request, "Error in form submission. Please try again.")
+    else:
+        form = UserLoginForm()
+    
+    return render(request, 'login.html', {'form': form})
+
+def signup(request):
+    if request.method == "POST":
+        form = UserSignupForm(request.POST)
+        if form.is_valid():
+            # Get the cleaned data
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            
+            # Create the user instance
+            user = User(first_name=first_name, last_name=last_name, email=email)
+            
+            # Set the password using set_password to hash it
+            user.set_password(password)
+            
+            # Optionally set other fields
+            user.is_active = True  
+            user.is_user = True  
+            
+            # Save the user instance to the database
+            user.save()
+
+            # Log the user in automatically after successful registration
+            login(request, user)
+
+            # Redirect to a success page (e.g., dashboard)
+            messages.success(request, "Account created successfully!")
+            messages.success(request, "You are now logged in.")
+            return redirect('login')
+        
+        else:
+            # If the form is invalid, render the form with errors
+            messages.error(request, "There was an error with your form. Please check the errors below.")
+    
+    else:
+        form = UserSignupForm()
+    
+    return render(request, 'signup.html', {'form': form})
+
+def user_logout(request):
+    logout(request)
+    return redirect('login')

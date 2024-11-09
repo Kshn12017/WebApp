@@ -17,7 +17,7 @@
         var processId = $(this).val();
         
         $.ajax({
-          url: "{% url 'load_process_codes' %}",  // Ensure this URL is correctly set in urls.py
+          url: "{% url 'load_process_codes' %}",
           data: {
             'process_id': processId
           },
