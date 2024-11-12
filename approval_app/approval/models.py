@@ -145,7 +145,8 @@ class ApprovalLevel(models.Model):
     process_code = models.ForeignKey(ProcessCode, on_delete=models.CASCADE)
     level_number = models.IntegerField()
     approver = models.ForeignKey(Account, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, default="Pending", choices=[("Pending", "Pending"), ("Approved", "Approved"), ("Rejected", "Rejected")])
 
     def __str__(self):
-        return f"Level {self.level_number} - {self.approver}"
+        return f"{self.process_code} - Level {self.level_number} "
 

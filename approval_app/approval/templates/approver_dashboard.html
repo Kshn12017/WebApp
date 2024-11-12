@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Approver Dashboard{% endblock %}
+
+{% block content %}
+<h2>Welcome, {{ request.user.full_name }}!</h2>
+<h3>Approver Dashboard</h3>
+
+{% if approval_levels %}
+    <table>
+        <thead>
+            <tr>
+                <th>Process</th>
+                <th>Process Code</th>
+                <th>Approval Level</th>
+                <th>File</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for level in approval_levels %}
+            <tr>
+                <td>{{ level.process.name }}</td>
+                <td>{{ level.process_code.code_name }}</td>
+                <td>{{ level.level_number }}</td>
+                <td>
+                {% if level.uploaded_file %}
+                    <a href="{{ level.uploaded_file.file.url }}" target="_blank">View File</a>
+                {% else %}
+                    No File
+                {% endif %}
+                </td>
+                <td>{{ level.status }}</td>
+                <td class="action-buttons">
+                    <a href="{% url 'approve' level.id %}" class="approve">Approve</a>
+                    <a href="{% url 'reject' level.id %}" class="reject">Reject</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No pending approvals.</p>
+{% endif %}
+{% endblock %}

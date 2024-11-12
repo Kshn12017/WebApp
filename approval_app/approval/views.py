@@ -1,16 +1,16 @@
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.contrib.auth import authenticate, login, logout
-# Create your views here.
 from django.shortcuts import render, redirect
-from django.template.loader import render_to_string
 from django.core.exceptions import ValidationError
 from django.contrib import messages
-from django.core.validators import EmailValidator
 from .models import *
 from .forms import *
 import pandas as pd
 from django.utils.safestring import mark_safe
+from django.contrib.auth.decorators import login_required
+
+# Create your views here.
 
 def process_selection(request):
     process_form = ProcessSelectionForm(request.POST or None)
@@ -51,7 +51,7 @@ def load_process_codes(request):
     return JsonResponse({'options': list(process_codes)})
 
 
-def validate_excel_file(file_path):    
+def validate_excel_file(file_path):
     # Attempt to read the file with pandas
     try:
         df = pd.read_excel(file_path)
@@ -79,8 +79,8 @@ def validate_excel_file(file_path):
     email_validator = EmailValidator()
     for email in df['Email'].dropna():
         email_validator(email)
-      
-        
+
+
 def manage_processes(request):
     if request.method == 'POST':
         process_form = ProcessForm(request.POST)
@@ -154,6 +154,67 @@ def add_approver(request):
     return render(request, 'add_approver.html', {'approver_form': approver_form})
 
 
+@login_required
+def approver_dashboard(request):
+    # Retrieve pending approval levels assigned to the logged-in approver
+    approver = request.user
+    approval_levels = ApprovalLevel.objects.filter(
+        approver=approver,
+        status="Pending"
+    ).order_by('level_number')
+
+    # Only show the lowest-level pending approvals
+    visible_approvals = []
+    for level in approval_levels:
+        # Check if all lower levels for this process code are approved
+        lower_levels_approved = ApprovalLevel.objects.filter(
+            process_code=level.process_code,
+            level_number__lt=level.level_number,
+            status="Approved"
+        ).count() == (level.level_number - 1)
+
+        if lower_levels_approved:
+            uploaded_file = UploadedFile.objects.filter(process_code=level.process_code).first()
+            level.uploaded_file = uploaded_file
+            visible_approvals.append(level)
+
+    context = {
+        'approval_levels': visible_approvals,
+    }
+    return render(request, 'approver_dashboard.html', context)
+
+
+@login_required
+def approve(request, level_id):
+    level = get_object_or_404(ApprovalLevel, id=level_id, approver=request.user)
+    if level.status == "Pending":
+        level.status = "Approved"
+        level.save()
+        messages.success(request, f"Approval Level {level.level_number} approved.")
+
+        # Check if there is a next level and if it should be made visible
+        next_level = ApprovalLevel.objects.filter(
+            process_code=level.process_code,
+            level_number=level.level_number + 1
+        ).first()
+
+        if next_level and next_level.status == "Pending":
+            messages.info(request, f"Approval Level {next_level.level_number} is now available for approval.")
+
+    return redirect('approver_dashboard')
+
+
+@login_required
+def reject(request, level_id):
+    level = get_object_or_404(ApprovalLevel, id=level_id, approver=request.user)
+    if level.status == "Pending":
+        level.status = "Rejected"
+        level.save()
+        messages.success(request, f"Approval Level {level.level_number} rejected.")
+
+    return redirect('approver_dashboard')
+
+
 def user_login(request):
     if request.method == 'POST':
         form = UserLoginForm(request, data=request.POST)
@@ -174,6 +235,7 @@ def user_login(request):
         form = UserLoginForm()
     
     return render(request, 'login.html', {'form': form})
+
 
 def signup(request):
     if request.method == "POST":
@@ -201,10 +263,9 @@ def signup(request):
             # Log the user in automatically after successful registration
             login(request, user)
 
-            # Redirect to a success page (e.g., dashboard)
+            # Redirect to a success page
             messages.success(request, "Account created successfully!")
-            messages.success(request, "You are now logged in.")
-            return redirect('login')
+            return redirect('process_selection')
         
         else:
             # If the form is invalid, render the form with errors
@@ -214,6 +275,7 @@ def signup(request):
         form = UserSignupForm()
     
     return render(request, 'signup.html', {'form': form})
+
 
 def user_logout(request):
     logout(request)

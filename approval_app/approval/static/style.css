@@ -164,3 +164,62 @@ form p input[type="text"] {
 option {
     color: #333;
 }
+
+/* Title styling */
+h2, h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+/* Table styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table th, table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Table headers */
+table th {
+    background-color: #f8f9fa;
+    color: #333;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Row styling */
+table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+/* Hover effect */
+table tr:hover {
+    background-color: #e2e6ea;
+}
+
+/* Action buttons */
+.action-buttons a {
+    text-decoration: none;
+    color: #ffffff;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-right: 5px;
+}
+
+.action-buttons .approve {
+    background-color: #28a745;
+}
+
+.action-buttons .reject {
+    background-color: #dc3545;
+}
+
+.action-buttons a:hover {
+    opacity: 0.8;
+}
